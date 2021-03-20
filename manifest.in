@@ -1,0 +1,7 @@
+include LICENSE
+include rtracker/schema.sql
+graft rtracker/static
+graft rtracker/templates
+graft tests
+global-exclude *.pyc
+global-exclude *.*~
