@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Import Equipment{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+  <form method="post" action="" enctype="multipart/form-data">
+    <label for="file">File to Import</label>
+    <input type="file" name="file" id="file" required accept=".txt">
+    <input type="submit" value="Submit">
+  </form>
+{% endblock %}

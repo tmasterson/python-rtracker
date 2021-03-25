@@ -1,4 +1,5 @@
 import pytest
+import io
 from rtracker.db import get_db
 
 def test_index(client):
@@ -38,12 +39,66 @@ def test_checkout_validation(client, items, location, message):
     assert message in response.data
 
 @pytest.mark.parametrize(
-        ("items", "location", "message"),
+        ("items", "message"),
         (
-            ("", "", b"1 or more items are required."),
-            ("test", "test", b"Item not found in database."),
+            ("", b"1 or more items are required."),
+            ("test", b"Item not found in database."),
             ),
         )
-def test_checkin_validation(client, items, location, message):
-    response = client.post("/checkin", data={"items": items, "location": location})
+def test_checkin_validation(client, items, message):
+    response = client.post("/checkin", data={"items": items})
     assert message in response.data
+
+def test_add(client, app):
+    assert client.get("/add").status_code == 200
+    client.post("add", data={"items": "5 - CORNERS 8120977429  OUR"})
+    with app.app_context():
+        db = get_db()
+        count = db.execute("select count(*) from items").fetchone()[0]
+        assert count == 4
+
+@pytest.mark.parametrize(
+        ("items", "message"),
+        (
+            ("", b"1 or more items are required."),
+            ),
+        )
+def test_add_validation(client, items, message):
+    response = client.post("/add", data={"items": items})
+    assert message in response.data
+
+def test_import_file(client, app):
+    assert client.get("/import_file").status_code == 200
+    files = {'file': io.BytesIO(b"test-data\ntest2")}
+    params = {name: (f, "mocked_name_{}".format(name)) for 
+            name, f in files.items()}
+    params['bucket'] = 'test'
+    params['keyname'] = 'mocked_name_test'
+    params['content_type'] = 'text'
+    response = client.post('/import_file', data=params, content_type='multipart/form-data', follow_redirects=True)
+    assert response.status_code == 200
+    with app.app_context():
+        db = get_db()
+        count = db.execute("select count(*) from items").fetchone()[0]
+        assert count == 5
+
+def test_import_file_validate_filename(client):
+    files = {'file': io.BytesIO(b"test-data\ntest2")}
+    params = {name: (f, "".format(name)) for 
+            name, f in files.items()}
+    params['bucket'] = 'test'
+    params['keyname'] = ''
+    params['content_type'] = 'text'
+    response = client.post('/import_file', data=params, content_type='multipart/form-data', follow_redirects=True)
+    print(response.data)
+    assert b"No file Name." in response.data
+
+def test_import_file_validate_file_empty(client):
+    files = {'file': io.BytesIO(b"")}
+    params = {name: (f, "mocked_name_{}".format(name)) for 
+            name, f in files.items()}
+    params['bucket'] = 'test'
+    params['keyname'] = 'mocked_name_test'
+    params['content_type'] = 'text'
+    response = client.post('/import_file', data=params, content_type='multipart/form-data', follow_redirects=True)
+    assert b"The file appears to be empty." in response.data
