@@ -41,6 +41,13 @@ def insert_items(items, location, db):
         db.execute("insert into items (item_id, location) values(?, ?)", (item, location))
     db.commit()
 
+def invalid_data(items):
+    item_list = items.split("\n")
+    for item in item_list:
+        if not item.isprintable():
+            return True
+    return False
+
 @bp.route("/checkout", methods=("GET", "POST"))
 def checkout():
     if request.method == "POST":
@@ -101,12 +108,12 @@ def import_file():
         error = None
         bitems = file.read()
         items = bitems.decode("utf-8")
-        print(file.filename)
-        print(items)
         if file.filename == "":
             error = "No file Name."
         elif items == "":
             error = "The file appears to be empty."
+        elif invalid_data(items):
+            error = "The file contains invalid data."
         if error is None:
             insert_items(items, location, db)
             return redirect(url_for("tracker.index"))

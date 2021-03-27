@@ -102,3 +102,13 @@ def test_import_file_validate_file_empty(client):
     params['content_type'] = 'text'
     response = client.post('/import_file', data=params, content_type='multipart/form-data', follow_redirects=True)
     assert b"The file appears to be empty." in response.data
+
+def test_import_file_validate_invalid_data(client):
+    files = {'file': io.BytesIO(b"test1\ntest2\ntest\ttest2")}
+    params = {name: (f, "mocked_name_{}".format(name)) for 
+            name, f in files.items()}
+    params['bucket'] = 'test'
+    params['keyname'] = 'mocked_name_test'
+    params['content_type'] = 'text'
+    response = client.post('/import_file', data=params, content_type='multipart/form-data', follow_redirects=True)
+    assert b"The file contains invalid data." in response.data
