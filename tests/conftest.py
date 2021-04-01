@@ -17,8 +17,9 @@ def app():
     """Create and configure a new app instance for each test."""
     # create a temporary file to isolate the database for each test
     db_fd, db_path = tempfile.mkstemp()
+    report_path = tempfile.mkdtemp()
     # create the app with common test config
-    app = create_app({"TESTING": True, "DATABASE": db_path})
+    app = create_app({"TESTING": True, "DATABASE": db_path, "REPORT_PATH": report_path})
 
     # create the database and load test data
     with app.app_context():
@@ -30,6 +31,7 @@ def app():
     # close and remove the temporary database
     os.close(db_fd)
     os.unlink(db_path)
+    os.rmdir(report_path)
 
 
 @pytest.fixture

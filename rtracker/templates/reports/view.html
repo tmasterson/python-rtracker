@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Reports{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+  {% for report in reports %}
+    <a href="{{ report["full_path"] }}">{{ report["name"] }}</a>
+  {% endfor %}
+{% endblock %}
