@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from flask import current_app
 from flask import Blueprint
 from flask import flash
@@ -22,3 +23,19 @@ def view():
             reports.append(report)
     print(reports)
     return render_template("/reports/view.html", reports=reports)
+
+@bp.route("/create")
+def create():
+    file_name = "checkedout-{}.txt".format(datetime.now().strftime("%Y%m%d"))
+    report_file = os.path.join(current_app.config["REPORT_PATH"], file_name)
+    error = None
+    db = get_db()
+    items = db.execute("select item_id, location from items where location != ''").fetchall()
+    if len(items) < 1:
+        error = "Nothing checked out.  No report generated."
+    else:
+        with open(report_file, "w") as f:
+            for item in items:
+                f.write("{},{}\n".format(item["item_id"], item["location"]))
+    flash(error)
+    return redirect(url_for("reports.view"))

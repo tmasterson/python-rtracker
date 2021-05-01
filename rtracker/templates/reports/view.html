@@ -2,6 +2,7 @@
 
 {% block header %}
   <h1>{% block title %}Reports{% endblock %}</h1>
+  <a href="{{ url_for('reports.create') }}">Create Report</a>
 {% endblock %}
 
 {% block content %}
